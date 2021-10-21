@@ -20,7 +20,7 @@ class Graph:
         self.nodes  = self.graph.nodes
 
     @timeit
-    def coloring(self):
+    def apply_coloring(self):
         """Inplace independent_vertex_sets generation
 
         Returns:
@@ -59,7 +59,7 @@ class Graph:
                 # first line: p name num_of_vertices num_of_edges
                 elif line.startswith('p'):
                     _, name, vertices_num, edges_num = line.split()
-                    print(f"{name}, {vertices_num} , {edges_num}")
+                    logger.info(f"Graph description: Vertexes number: {vertices_num} , Edges number: {edges_num}")
                     adjacency_matrix = np.zeros((int(vertices_num), int(vertices_num)), dtype=np.bool)
                 elif line.startswith('e'):
                     _, v1, v2 = line.split()

@@ -1,22 +1,17 @@
 from graph import Graph
 import cplex
+from utils import timeit
 
 
 class BNBSolver:
-    def __init__(self, graph: Graph, is_integer: bool = True):
+    def __init__(self, graph: Graph):
         self.graph = graph
-        self.is_integer = is_integer
         self.cplex_model = self.construct_model()
 
     def construct_model(self):
-        if not self.is_integer:
-            type_one = 1.0
-            type_zero = 0.0
-            var_type = "C"
-        else:
-            type_one = 1
-            type_zero = 0
-            var_type = "B"
+        type_one = 1.0
+        type_zero = 0.0
+        var_type = "C"
 
         nodes_amount = len(self.graph.nodes)
         obj = [type_one] * nodes_amount
@@ -57,8 +52,14 @@ class BNBSolver:
                                        names=constraint_names)
         return problem
 
+    @timeit
+    def solve(self):
+        self.cplex_model.solve()
+        values = self.cplex_model.solution.get_values()
+        objective_value = self.cplex_model.solution.get_objective_value()
 
-graph = Graph(data="/home/alexander/HSE_Stuff/Max_Clique/DIMACS_subset_ascii/C125.9.clq")
-graph.coloring()
-bnb_solver = BNBSolver(graph=graph)
-print(bnb_solver.cplex_model)
+        print(f"Objective Value: {objective_value}")
+
+        for idx in range(len(values)):
+            if values[idx] != 0:
+                print(f"x_{idx} = {values[idx]}")

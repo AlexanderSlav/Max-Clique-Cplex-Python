@@ -1,4 +1,5 @@
 import time
+from loguru import logger
 
 
 def timeit(f):
@@ -9,5 +10,5 @@ def timeit(f):
         time1 = time.time()
         _ = f(*args)
         time2 = time.time()
-        print(f"\n {f.__name__} worked {round(time2 - time1, 3)} seconds")
+        logger.info(f"Function: <{f.__name__}> worked {round(time2 - time1, 3)} seconds")
     return wrap
