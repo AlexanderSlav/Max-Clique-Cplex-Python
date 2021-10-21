@@ -3,9 +3,8 @@ from loguru import logger
 
 
 def timeit(f):
-    '''
-    Measures time of function execution
-    '''
+    """Measures time of function execution
+    """
     def wrap(*args):
         time1 = time.time()
         _ = f(*args)

@@ -16,8 +16,8 @@ class Graph:
             logger.error(f"\n Wrong input data format: {type(data)}\n "
                          f"Should be <str> - (path to data)  or <np.ndarray> (adjacency matrix)")
         self.independent_vertex_sets = []
-        self.not_connected_edges = nx.complement(self.graph).edges
-        self.nodes  = self.graph.nodes
+        self.not_connected_vertexes = nx.complement(self.graph).edges
+        self.nodes = self.graph.nodes
 
     @timeit
     def apply_coloring(self):
@@ -34,7 +34,7 @@ class Graph:
                       nx.coloring.strategy_saturation_largest_first]
 
         for strategy in strategies:
-            # get coloring with current strategy: running_coloring - dict(key=node, value=color)
+            # get coloring with current strategy: running_coloring - dict(key=vertex, value=color)
             running_coloring = nx.coloring.greedy_color(self.graph, strategy=strategy)
             for unique_color in set(running_coloring.values()):
                 self.independent_vertex_sets.append([vertex for vertex, color in running_coloring.items()
