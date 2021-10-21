@@ -2,6 +2,7 @@ import numpy as np
 import networkx as nx
 from typing import Union
 from loguru import logger
+from utils import timeit
 
 
 class Graph:
@@ -14,8 +15,18 @@ class Graph:
         else:
             logger.error(f"\n Wrong input data format: {type(data)}\n "
                          f"Should be <str> - (path to data)  or <np.ndarray> (adjacency matrix)")
+        self.independent_vertex_sets = []
+        self.not_connected_edges = nx.complement(self.graph).edges
+        self.nodes  = self.graph.nodes
 
+    @timeit
     def coloring(self):
+        """Inplace independent_vertex_sets generation
+
+        Returns:
+        Nothing returns. Function update self.independent_vertex_sets field
+       """
+
         # define strategies for graph coloring
         strategies = [nx.coloring.strategy_largest_first,
                       nx.coloring.strategy_smallest_last,
@@ -23,10 +34,11 @@ class Graph:
                       nx.coloring.strategy_saturation_largest_first]
 
         for strategy in strategies:
+            # get coloring with current strategy: running_coloring - dict(key=node, value=color)
             running_coloring = nx.coloring.greedy_color(self.graph, strategy=strategy)
-            print("-" * 25)
-            print(running_coloring)
-            print("-" * 25)
+            for unique_color in set(running_coloring.values()):
+                self.independent_vertex_sets.append([vertex for vertex, color in running_coloring.items()
+                                                     if color == unique_color])
 
     @staticmethod
     def read_and_prepare_data(path: str):
@@ -55,5 +67,3 @@ class Graph:
                 else:
                     continue
         return adjacency_matrix
-
-graph = Graph(data=)

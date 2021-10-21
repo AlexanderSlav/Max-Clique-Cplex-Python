@@ -47,12 +47,10 @@ def construct_problem(adjacency_matrix, not_connected_edges: np.array, is_intege
     for xi, xj in not_connected_edges:
         contraint = [['x{0}'.format(xi), 'x{0}'.format(xj)], [type_one, type_one]]
         constraints.append(contraint)
-        print(contraint)
     
     for ind_set in ivs:
         constraint = [['x{0}'.format(x) for x in ind_set], [type_one] * len(ind_set)]
         constraints.append(constraint)
-        print('inv:', constraint)
 
     problem.linear_constraints.add(lin_expr=constraints,
                                    senses=constraint_senses,
@@ -93,7 +91,7 @@ def main():
     np.fill_diagonal(adjacency_matrix, 1)
     graph = Graph.Adjacency(adjacency_matrix, mode="lower")
     start = time()
-    ivs = graph.independent_vertex_sets(min=4, max=6)
+    ivs = graph.independent_vertex_sets()
     print(f"{round(time() - start, 3)} get ivs seconds")
 
     inds = get_not_connected_inds(adjacency_matrix)
