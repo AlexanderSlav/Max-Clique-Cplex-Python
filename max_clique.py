@@ -4,9 +4,10 @@ import numpy as np
 from time import time
 from igraph import Graph
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input_data', type=str, help='path to input data',default='')
+    parser.add_argument('--input_data', type=str, help='path to input data', default='/home/alexander/HSE_Stuff/Max_Clique/DIMACS_subset_ascii/C125.9.clq')
     return parser.parse_args()
 
 
@@ -21,7 +22,7 @@ def construct_problem(adjacency_matrix, not_connected_edges: np.array, is_intege
         var_type = "B"
     
     num_nodes = len(adjacency_matrix)
-    obj = [type_one] * len(adjacency_matrix)
+    obj = [type_one] * num_nodes
     upper_bounds = [type_one] * num_nodes
     lower_bounds = [type_zero] * num_nodes
 
@@ -44,11 +45,14 @@ def construct_problem(adjacency_matrix, not_connected_edges: np.array, is_intege
     constraints = []
 
     for xi, xj in not_connected_edges:
-        constraints.append(
-            [['x{0}'.format(xi), 'x{0}'.format(xj)], [type_one, type_one]])
+        contraint = [['x{0}'.format(xi), 'x{0}'.format(xj)], [type_one, type_one]]
+        constraints.append(contraint)
+        print(contraint)
     
     for ind_set in ivs:
-        constraints.append([['x{0}'.format(x) for x in ind_set], [type_one] * len(ind_set)])
+        constraint = [['x{0}'.format(x) for x in ind_set], [type_one] * len(ind_set)]
+        constraints.append(constraint)
+        print('inv:', constraint)
 
     problem.linear_constraints.add(lin_expr=constraints,
                                    senses=constraint_senses,
@@ -88,7 +92,9 @@ def main():
     adjacency_matrix = read_and_prepare_data(args.input_data)
     np.fill_diagonal(adjacency_matrix, 1)
     graph = Graph.Adjacency(adjacency_matrix, mode="lower")
+    start = time()
     ivs = graph.independent_vertex_sets(min=4, max=6)
+    print(f"{round(time() - start, 3)} get ivs seconds")
 
     inds = get_not_connected_inds(adjacency_matrix)
     problem_max_clique = construct_problem(adjacency_matrix, inds, is_integer, ivs)  
@@ -96,7 +102,7 @@ def main():
     problem_max_clique.set_results_stream(None)
     start = time()
     problem_max_clique.solve()
-    print(f"{round(time() - start, 3)} seconds")
+    print(f"{round(time() - start, 3)} solve seconds")
     values = problem_max_clique.solution.get_values()
     objective_value = problem_max_clique.solution.get_objective_value()
 
