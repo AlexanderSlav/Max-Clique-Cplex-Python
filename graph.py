@@ -29,9 +29,12 @@ class Graph:
 
         # define strategies for graph coloring
         strategies = [nx.coloring.strategy_largest_first,
-                      nx.coloring.strategy_smallest_last,
+                      nx.coloring.strategy_random_sequential,
                       nx.coloring.strategy_independent_set,
-                      nx.coloring.strategy_saturation_largest_first]
+                      nx.coloring.strategy_connected_sequential_bfs,
+                      nx.coloring.strategy_connected_sequential_dfs,
+                      nx.coloring.strategy_saturation_largest_first,
+                      nx.coloring.strategy_smallest_last]
 
         for strategy in strategies:
             # get coloring with current strategy: running_coloring - dict(key=vertex, value=color)
