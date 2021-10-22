@@ -7,7 +7,8 @@ def timeit(f):
     """
     def wrap(*args):
         time1 = time.time()
-        _ = f(*args)
+        result = f(*args)
         time2 = time.time()
         logger.info(f"Function: <{f.__name__}> worked {round(time2 - time1, 3)} seconds")
+        return result
     return wrap
