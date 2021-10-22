@@ -4,6 +4,7 @@ from utils import *
 import math
 import random
 
+
 class BNBSolver:
     """The solver work pipeline:
      1. Cplex Model Construction
@@ -56,8 +57,8 @@ class BNBSolver:
 
     @timeit
     def solve(self):
-        self.initial_heuristic()
-        logger.info(f"Current best MCP size {self.maximum_clique_size}!")
+        # self.initial_heuristic()
+        logger.info(f"Current best MCP size {self.maximum_clique_size}")
         self.branching()
         print(f"Objective Value of MCP Problem (Maximum Clique Size): {self.maximum_clique_size}")
         for idx in range(len(self.best_solution)):
@@ -65,7 +66,10 @@ class BNBSolver:
                 print(f"x_{idx} = {self.best_solution[idx]}")
 
     def branching(self):
-        self.cplex_model.solve()
+        try:
+            self.cplex_model.solve()
+        except cplex.exceptions.errors.CplexSolverError:
+            return
         current_values = self.cplex_model.solution.get_values()
         current_objective_value = self.cplex_model.solution.get_objective_value()
         logger.debug(current_values)
@@ -80,6 +84,7 @@ class BNBSolver:
             self.maximum_clique_size = math.floor(current_objective_value)
             logger.info(f"Best Solution updated. New value is {self.maximum_clique_size}")
             return
+
         self.branch_num += 1
         cur_branch = self.branch_num
         # Randomly choose branching var from non integers vars
@@ -100,7 +105,7 @@ class BNBSolver:
         branching_var_idx, branching_var_value = branching_var
         right_hand_side = [math.floor(branching_var_value)]
         logger.info(f"Adding left constraint x{branching_var_idx} <= {math.floor(branching_var_value)}")
-        self.cplex_model.linear_constraints.add(lin_expr=[[[f"x{branching_var_idx}"], [1.0]]],
+        self.cplex_model.linear_constraints.add(lin_expr=[[[f"x{branching_var_idx}"], right_hand_side]],
                                                 senses=['L'],
                                                 rhs=right_hand_side,
                                                 names=[f'c{branching_var_idx}'])
@@ -109,7 +114,7 @@ class BNBSolver:
         branching_var_idx, branching_var_value = branching_var
         right_hand_side = [math.ceil(branching_var_value)]
         logger.info(f"Adding right constraint x{branching_var_idx} >= {math.ceil(branching_var_value)}")
-        self.cplex_model.linear_constraints.add(lin_expr=[[[f"x{branching_var_idx}"], [1.0]]],
+        self.cplex_model.linear_constraints.add(lin_expr=[[[f"x{branching_var_idx}"], right_hand_side]],
                                                 senses=['G'],
                                                 rhs=right_hand_side,
                                                 names=[f'c{branching_var_idx}'])

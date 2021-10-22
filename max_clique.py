@@ -6,7 +6,7 @@ from bnb import BNBSolver
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_data', type=str, help='path to input data',
-                        default='/home/alexander/HSE_Stuff/Max_Clique/DIMACS_subset_ascii/C125.9.clq')
+                        default='/home/alexander/HSE_Stuff/Max_Clique/DIMACS_subset_ascii/keller4.clq')
     return parser.parse_args()
 
 
