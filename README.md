@@ -31,13 +31,15 @@ johnson8-2-4.clq,4,E
 All graphs were evaluated on the machine with the following characteristics:
 
 **RAM** - 64GB
+
+
 ![](imgs/machine_info.png)
 
 ## Evaluation Results
 
 ### Easy graphs
 
-|Graph Name   |Correct Max Clique|Graph Complexity|Found Max Clique|Is Clique|Consumed Time|
+|Graph Name   |Correct Max Clique|Graph Complexity|Found Max Clique|Is Clique|Consumed Time(seconds)|
 |-------------|------------------|----------------|----------------|---------|-------------|
 |johnson8-2-4 |4                 |E               |4               |True     |0.244        |
 |johnson16-2-4|8                 |E               |8               |True     |41.034       |
