@@ -88,6 +88,13 @@ class BNBSolver:
         )
         return problem
 
+    # below code taken from https://stackoverflow.com/questions/59009712/
+    # fastest-way-of-checking-if-a-subgraph-is-a-clique-in-networkx
+    def is_clique(self, nodelist):
+        chek_subgraph = self.graph.graph.subgraph(nodelist)
+        num_nodes = len(nodelist)
+        return chek_subgraph.size() == num_nodes * (num_nodes - 1) / 2
+
     @timeit
     def solve(self):
 
