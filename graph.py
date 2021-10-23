@@ -1,20 +1,39 @@
 import numpy as np
 import networkx as nx
 from typing import Union
-from loguru import logger
-from utils import timeit
+from utils import *
+from collections import namedtuple
+import csv
 
 
-class Graph:
-    def __init__(self, data: Union[str, np.ndarray]):
-        if isinstance(data, str):
+class MCPGraph:
+    def __init__(self, data: Union[str, np.ndarray, namedtuple]):
+        if isinstance(data, tuple):
+            adj_matrix = self.read_and_prepare_data(osp.join(DATA_DIR, data.GraphName))
+            self.graph = nx.from_numpy_array(adj_matrix)
+            # the graph name without extension
+            self.name = data.GraphName[:-4]
+            # right answer for MCP
+            self.maximum_clique_size_gt = int(data.CorrectMaxClique)
+            self.complexity_type = data.Level
+
+        elif isinstance(data, str):
             adj_matrix = self.read_and_prepare_data(data)
             self.graph = nx.from_numpy_array(adj_matrix)
+            self.name = osp.basename(data)[:-4]
+            self.maximum_clique_size_gt = None
+            self.complexity_type = None
+
         elif isinstance(data, np.ndarray):
             self.graph = nx.from_numpy_array(data)
+            self.name = None
+            self.maximum_clique_size_gt = None
+            self.complexity_type = None
+
         else:
             logger.error(f"\n Wrong input data format: {type(data)}\n "
                          f"Should be <str> - (path to data)  or <np.ndarray> (adjacency matrix)")
+        self.maximum_clique_size_found = -1
         self.independent_vertex_sets = []
         self.not_connected_vertexes = nx.complement(self.graph).edges
         self.nodes = self.graph.nodes
@@ -70,3 +89,7 @@ class Graph:
                 else:
                     continue
         return adjacency_matrix
+
+    def __repr__(self):
+        return f"Ground Truth Max Clique Size: {self.maximum_clique_size_gt} \n" \
+               f"Found Max Clique Size: {self.maximum_clique_size_found}\n"
