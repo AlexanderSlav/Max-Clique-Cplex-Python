@@ -8,7 +8,6 @@ __pycache__/
 *.so
 .idea
 data
-results
 # Distribution / packaging
 .Python
 build/
@@ -57,12 +56,6 @@ coverage.xml
 # Translations
 *.mo
 *.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
 
 # Flask stuff:
 instance/

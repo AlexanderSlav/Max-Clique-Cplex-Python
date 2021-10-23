@@ -3,7 +3,7 @@
 
 ## Requirements
  - Python >= 3.6
- - pip install -r requirements-dev.txt
+ - pip install -r requirements.txt
 
 ## Evaluation on subset of DIMACS graphs
 ```bash
@@ -17,4 +17,11 @@ optional arguments:
   --output_results_dump OUTPUT_RESULTS_DUMP
                         path to output file
 
+```
+
+The sample of input data file.
+
+```text
+GraphName,CorrectMaxClique,Level
+johnson8-2-4.clq,4,E
 ```

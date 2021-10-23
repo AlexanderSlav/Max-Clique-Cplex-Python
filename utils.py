@@ -7,8 +7,10 @@ from collections import namedtuple
 
 from loguru import logger
 
-DATA_DIR = osp.join(osp.dirname(__file__), "data")
+DATA_DIR = osp.join(osp.dirname(__file__), "benchmarks")
+SOURCE_GRAPH_DIR = osp.join(osp.dirname(__file__), "data")
 RESULTS_DIR = osp.join(osp.dirname(__file__), "results")
+LOG_DIR = osp.join(osp.dirname(__file__), "becnhmark_logs")
 
 timestamp = datetime.datetime.now().strftime("%Y_%m_%d_%H:%M")
 

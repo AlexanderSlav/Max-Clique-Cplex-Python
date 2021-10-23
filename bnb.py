@@ -15,7 +15,12 @@ class BNBSolver:
     3. BnB recursive call
     """
 
-    def __init__(self, graph: MCPGraph, branching_strategy: str = "random"):
+    def __init__(
+        self,
+        graph: MCPGraph,
+        branching_strategy: str = "max",
+        debug_mode: bool = False,
+    ):
         self.graph = graph
         self.branching_strategy = branching_strategy
         self.cplex_model = self.construct_model()
@@ -23,6 +28,7 @@ class BNBSolver:
         self.maximum_clique_size = 0
         self.branch_num = 0
         self.eps = 1e-5
+        self.debug_mode = debug_mode
 
     def construct_model(self):
         nodes_amount = len(self.graph.nodes)
@@ -82,6 +88,13 @@ class BNBSolver:
         )
         return problem
 
+    # below code taken from https://stackoverflow.com/questions/59009712/
+    # fastest-way-of-checking-if-a-subgraph-is-a-clique-in-networkx
+    def is_clique(self, nodelist):
+        chek_subgraph = self.graph.graph.subgraph(nodelist)
+        num_nodes = len(nodelist)
+        return chek_subgraph.size() == num_nodes * (num_nodes - 1) / 2
+
     @timeit
     def solve(self):
 
@@ -93,18 +106,38 @@ class BNBSolver:
 
         # apply greedy heuristic first
         best_heuristic_sol, _ = self.initial_heuristic()
-        self.best_solution = generate_init_best_solution(best_heuristic_sol)
-        self.maximum_clique_size = len(best_heuristic_sol)
-        logger.info(f"Start best MCP size {self.maximum_clique_size}")
-        logger.info(f"Start best MCP solution {self.best_solution}")
+        is_clique = self.is_clique(list(best_heuristic_sol))
+        if is_clique:
+            logger.info(f"Initial heuristic solution is clique!")
+            self.best_solution = generate_init_best_solution(
+                best_heuristic_sol,
+            )
+            self.maximum_clique_size = len(best_heuristic_sol)
+            logger.info(
+                f"Initial heuristic: Start best MCP size {self.maximum_clique_size}",
+            )
+            logger.info(
+                f"Initial heuristic: Start best MCP solution {self.best_solution}",
+            )
+        else:
+            logger.info(f"Initial heuristic solution is not clique!")
 
         # branch&bound recursive algorithm
         self.branching()
+        solution_nodes = np.nonzero(np.array(self.best_solution))
 
         # log result
-        logger.info(
-            f"Objective Value of MCP Problem (Maximum Clique Size): {self.maximum_clique_size}",
-        )
+        if self.is_clique(solution_nodes[0].tolist()):
+            logger.info(
+                f"Objective Value of MCP Problem (Maximum Clique Size): {self.maximum_clique_size}. It is a clique!",
+            )
+            self.is_solution_is_clique = True
+        else:
+            logger.info(
+                f"Objective Value of MCP Problem (Maximum Clique Size): {self.maximum_clique_size}. It is a clique!",
+            )
+            self.is_solution_is_clique = False
+
         for idx in range(len(self.best_solution)):
             if self.best_solution[idx] != 0:
                 logger.info(f"x_{idx} = {self.best_solution[idx]}")
@@ -116,13 +149,15 @@ class BNBSolver:
         current_objective_value = (
             self.cplex_model.solution.get_objective_value()
         )
-        logger.debug(current_values)
+        if self.debug_mode:
+            logger.debug(current_values)
 
         # There is no sense in branching further
         if current_objective_value <= self.maximum_clique_size:
-            logger.info(
-                f"|{self.graph.name}| Skip Branch with MCP size {current_objective_value}!",
-            )
+            if self.debug_mode:
+                logger.info(
+                    f"|{self.graph.name}| Skip Branch with MCP size {current_objective_value}!",
+                )
             return
 
         if all(
@@ -134,9 +169,10 @@ class BNBSolver:
             # Best Solution updated.
             self.best_solution = [round(x) for x in current_values]
             self.maximum_clique_size = math.floor(current_objective_value)
-            logger.info(
-                f"|{self.graph.name}| Best Solution updated. New value is {self.maximum_clique_size}",
-            )
+            if self.debug_mode:
+                logger.info(
+                    f"|{self.graph.name}| Best Solution updated. New value is {self.maximum_clique_size}",
+                )
             return
 
         self.branch_num += 1
@@ -162,26 +198,46 @@ class BNBSolver:
         else:
             logger.error("Wrong branching strategy")
 
-        # Add Left constraints
-        self.add_left_constraint(branching_var, cur_branch)
-        self.branching()
-        self.cplex_model.linear_constraints.delete(f"c{cur_branch}")
-        logger.info(f"|{self.graph.name}| The c{cur_branch} deleted")
+        # go to  right branch if value closer to 1
+        if round(branching_var[1]):
+            # Add Right constraints
+            self.add_right_constraint(branching_var, cur_branch)
+            self.branching()
+            self.cplex_model.linear_constraints.delete(f"c{cur_branch}")
+            if self.debug_mode:
+                logger.info(f"|{self.graph.name}| The c{cur_branch} deleted")
 
-        # Add Right constraints
-        self.add_right_constraint(branching_var, cur_branch)
-        self.branching()
-        self.cplex_model.linear_constraints.delete(f"c{cur_branch}")
+            # Add Left constraints
+            self.add_left_constraint(branching_var, cur_branch)
+            self.branching()
+            self.cplex_model.linear_constraints.delete(f"c{cur_branch}")
+            if self.debug_mode:
+                logger.info(f"|{self.graph.name}| The c{cur_branch} deleted")
+        else:
+            # Add Left constraints
+            self.add_left_constraint(branching_var, cur_branch)
+            self.branching()
+            self.cplex_model.linear_constraints.delete(f"c{cur_branch}")
+            if self.debug_mode:
+                logger.info(f"|{self.graph.name}| The c{cur_branch} deleted")
+
+            # Add Right constraints
+            self.add_right_constraint(branching_var, cur_branch)
+            self.branching()
+            self.cplex_model.linear_constraints.delete(f"c{cur_branch}")
+            if self.debug_mode:
+                logger.info(f"|{self.graph.name}| The c{cur_branch} deleted")
 
     def add_left_constraint(self, branching_var: tuple, current_branch: int):
         branching_var_idx, branching_var_value = branching_var
-        # solver has -1.1102230246251565e-16 variable and math.floor() round it to -1
+        # solver sometime can produce variables like that -1.1102230246251565e-16 and math.floor() round it to -1
         if math.floor(branching_var_value) == -1:
             branching_var_value = 0
         right_hand_side = [math.floor(branching_var_value)]
-        logger.info(
-            f"|{self.graph.name}| Adding left constraint x{branching_var_idx} == {math.floor(branching_var_value)}",
-        )
+        if self.debug_mode:
+            logger.info(
+                f"|{self.graph.name}| Adding left constraint x{branching_var_idx} == {math.floor(branching_var_value)}",
+            )
         self.cplex_model.linear_constraints.add(
             lin_expr=[[[f"x{branching_var_idx}"], [1.0]]],
             senses=["E"],
@@ -192,9 +248,10 @@ class BNBSolver:
     def add_right_constraint(self, branching_var: tuple, current_branch: int):
         branching_var_idx, branching_var_value = branching_var
         right_hand_side = [math.ceil(branching_var_value)]
-        logger.info(
-            f"|{self.graph.name}| Adding right constraint x{branching_var_idx} == {math.ceil(branching_var_value)}",
-        )
+        if self.debug_mode:
+            logger.info(
+                f"|{self.graph.name}| Adding right constraint x{branching_var_idx} == {math.ceil(branching_var_value)}",
+            )
         self.cplex_model.linear_constraints.add(
             lin_expr=[[[f"x{branching_var_idx}"], [1.0]]],
             senses=["E"],

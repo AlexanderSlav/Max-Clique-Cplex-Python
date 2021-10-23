@@ -1,0 +1,6 @@
+Graph Name,Correct Max Clique,Graph Complexity,Found Max Clique,Is Clique,Consumed Time
+johnson8-2-4,4,E,4,True,0.244
+johnson16-2-4,8,E,8,True,41.034
+MANN_a9,16,E,16,True,1.128
+keller4,11,E,11,True,175.136
+hamming8-4,16,E,16,True,37.038
