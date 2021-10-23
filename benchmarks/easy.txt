@@ -1,0 +1,6 @@
+GraphName,CorrectMaxClique,Level
+johnson8-2-4.clq,4,E
+johnson16-2-4.clq,8,E
+MANN_a9.clq,16,E
+keller4.clq,11,E
+hamming8-4.clq,16,E

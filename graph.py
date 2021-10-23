@@ -10,7 +10,7 @@ class MCPGraph:
     def __init__(self, data: Union[str, np.ndarray, namedtuple]):
         if isinstance(data, tuple):
             adj_matrix = self.read_and_prepare_data(
-                osp.join(DATA_DIR, data.GraphName),
+                osp.join(SOURCE_GRAPH_DIR, data.GraphName),
             )
             self.graph = nx.from_numpy_array(adj_matrix)
             # the graph name without extension
@@ -35,15 +35,20 @@ class MCPGraph:
         else:
             logger.error(
                 f"\n Wrong input data format: {type(data)}\n "
-                f"Should be <str> - (path to data)  or <np.ndarray> (adjacency matrix)",
+                f"Should be <str> - (path to data)  or <np.ndarray> (adjacency matrix) or NamedTuple",
             )
         self.maximum_clique_size_found = -1
-        self.independent_vertex_sets = []
+        self.independent_vertex_sets = set()
         self.not_connected_vertexes = nx.complement(self.graph).edges
         self.nodes = self.graph.nodes
 
     @timeit
-    def apply_coloring(self):
+    def apply_coloring(
+        self,
+        minimum_set_size: int = 3,
+        iteration_number: int = 50,
+        time_limit: int = 500,
+    ):
         """Inplace independent_vertex_sets generation
 
         Returns:
@@ -54,27 +59,53 @@ class MCPGraph:
         strategies = [
             nx.coloring.strategy_largest_first,
             nx.coloring.strategy_random_sequential,
-            nx.coloring.strategy_independent_set,
             nx.coloring.strategy_connected_sequential_bfs,
-            nx.coloring.strategy_connected_sequential_dfs,
             nx.coloring.strategy_saturation_largest_first,
             nx.coloring.strategy_smallest_last,
         ]
-
-        for strategy in strategies:
-            # get coloring with current strategy: running_coloring - dict(key=vertex, value=color)
-            running_coloring = nx.coloring.greedy_color(
-                self.graph,
-                strategy=strategy,
+        if len(self.graph.nodes) < 500:
+            strategies.append(
+                nx.coloring.strategy_independent_set,
             )
-            for unique_color in set(running_coloring.values()):
-                self.independent_vertex_sets.append(
-                    [
-                        vertex
-                        for vertex, color in running_coloring.items()
-                        if color == unique_color
-                    ],
+        start_time = time.time()
+        for _ in range(iteration_number):
+            if time.time() - start_time >= time_limit:
+                logger.info("Reach time limit at searching ind sets")
+                break
+
+            for strategy in strategies:
+                dict_of_independet_sets = dict()
+                # get coloring with current strategy: running_coloring - dict(key=vertex, value=color)
+                running_coloring = nx.coloring.greedy_color(
+                    self.graph,
+                    strategy=strategy,
                 )
+                for vertex, color in running_coloring.items():
+                    if color not in dict_of_independet_sets.keys():
+                        dict_of_independet_sets[color] = []
+                    dict_of_independet_sets[color].append(vertex)
+
+                for _, ind_set in dict_of_independet_sets.items():
+                    if len(ind_set) >= minimum_set_size:
+                        self.independent_vertex_sets.add(
+                            tuple(sorted(ind_set)),
+                        )
+
+    def filter_covered_not_connected(self, filtration_limit: int = 300000):
+        filtered_not_connected = []
+        for idx, not_connected_vertexes in enumerate(
+            self.not_connected_vertexes,
+        ):
+            vertexes_are_covered_by_set = False
+            vertex_1, vetex_2 = not_connected_vertexes
+            if idx < filtration_limit:
+                for ind_set in self.independent_vertex_sets:
+                    if (vertex_1 in ind_set) and (vetex_2 in ind_set):
+                        vertexes_are_covered_by_set = True
+                        break
+            if not vertexes_are_covered_by_set:
+                filtered_not_connected.append(not_connected_vertexes)
+        self.not_connected_vertexes = filtered_not_connected
 
     @staticmethod
     def read_and_prepare_data(path: str):

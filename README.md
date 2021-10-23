@@ -3,7 +3,7 @@
 
 ## Requirements
  - Python >= 3.6
- - pip install -r requirements-dev.txt
+ - pip install -r requirements.txt
 
 ## Evaluation on subset of DIMACS graphs
 ```bash
@@ -24,7 +24,4 @@ The sample of input data file.
 ```text
 GraphName,CorrectMaxClique,Level
 johnson8-2-4.clq,4,E
-johnson16-2-4.clq,8,E
-MANN_a9.clq,16,E
-keller4.clq,11,E
 ```
