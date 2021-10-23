@@ -106,18 +106,38 @@ class BNBSolver:
 
         # apply greedy heuristic first
         best_heuristic_sol, _ = self.initial_heuristic()
-        self.best_solution = generate_init_best_solution(best_heuristic_sol)
-        self.maximum_clique_size = len(best_heuristic_sol)
-        logger.info(f"Start best MCP size {self.maximum_clique_size}")
-        logger.info(f"Start best MCP solution {self.best_solution}")
+        is_clique = self.is_clique(list(best_heuristic_sol))
+        if is_clique:
+            logger.info(f"Initial heuristic solution is clique!")
+            self.best_solution = generate_init_best_solution(
+                best_heuristic_sol,
+            )
+            self.maximum_clique_size = len(best_heuristic_sol)
+            logger.info(
+                f"Initial heuristic: Start best MCP size {self.maximum_clique_size}",
+            )
+            logger.info(
+                f"Initial heuristic: Start best MCP solution {self.best_solution}",
+            )
+        else:
+            logger.info(f"Initial heuristic solution is not clique!")
 
         # branch&bound recursive algorithm
         self.branching()
+        solution_nodes = np.nonzero(np.array(self.best_solution))
 
         # log result
-        logger.info(
-            f"Objective Value of MCP Problem (Maximum Clique Size): {self.maximum_clique_size}",
-        )
+        if self.is_clique(solution_nodes[0].tolist()):
+            logger.info(
+                f"Objective Value of MCP Problem (Maximum Clique Size): {self.maximum_clique_size}. It is a clique!",
+            )
+            self.is_solution_is_clique = True
+        else:
+            logger.info(
+                f"Objective Value of MCP Problem (Maximum Clique Size): {self.maximum_clique_size}. It is a clique!",
+            )
+            self.is_solution_is_clique = False
+
         for idx in range(len(self.best_solution)):
             if self.best_solution[idx] != 0:
                 logger.info(f"x_{idx} = {self.best_solution[idx]}")

@@ -33,8 +33,7 @@ def benchmark(graph: namedtuple):
     bnb_solver = BNBSolver(graph=graph)
     bnb_solver.solve()
     graph.maximum_clique_size_found = bnb_solver.maximum_clique_size
-    # # check if we get right solution
-    # assert graph.maximum_clique_size_found == graph.maximum_clique_size_gt
+    graph.is_solution_is_clique = bnb_solver.is_solution_is_clique
     return graph
 
 
@@ -46,6 +45,7 @@ def main():
         "Correct Max Clique",
         "Graph Complexity",
         "Found Max Clique",
+        "Is Clique",
         "Consumed Time",
     ]
     results = [column_names]
@@ -70,6 +70,7 @@ def main():
                 str(graph.maximum_clique_size_gt),
                 str(graph.complexity_type),
                 str(graph.maximum_clique_size_found),
+                str(graph.is_solution_is_clique),
                 str(work_time),
             ],
         )
@@ -77,6 +78,7 @@ def main():
             "Right Maximum Clique Size": str(graph.maximum_clique_size_gt),
             "Found Maximum Clique Size": str(graph.maximum_clique_size_found),
             "Consumed Time": str(work_time),
+            "Is Clique": str(graph.is_solution_is_clique),
             "Graph Complexity": str(graph.complexity_type),
         }
 
@@ -91,9 +93,6 @@ def main():
             json.dump(curr_result, file, indent=4)
 
         logger.info(f"BnB finished for {graph_name} !")
-        # except:
-        #     logger.error(f"Failed with {graph_name}!")
-        #     continue
 
     dump_results_to_csv("report", results)
 

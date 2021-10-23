@@ -41,6 +41,7 @@ class MCPGraph:
         self.independent_vertex_sets = set()
         self.not_connected_vertexes = nx.complement(self.graph).edges
         self.nodes = self.graph.nodes
+        self.is_solution_is_clique = None
 
     @timeit
     def apply_coloring(
