@@ -1,10 +1,12 @@
-import time
-import os
-from loguru import logger
-import os.path as osp
-from collections import namedtuple
-import datetime
 import csv
+import datetime
+import os
+import os.path as osp
+import time
+from collections import namedtuple
+
+from loguru import logger
+
 DATA_DIR = osp.join(osp.dirname(__file__), "data")
 RESULTS_DIR = osp.join(osp.dirname(__file__), "results")
 
@@ -21,8 +23,8 @@ def dump_results_to_csv(output_name, results):
 
 
 def timeit(f):
-    """Measures time of function execution
-    """
+    """Measures time of function execution"""
+
     def wrap(*args):
         time1 = time.time()
         result = f(*args)
@@ -30,14 +32,18 @@ def timeit(f):
         work_time = round(time2 - time1, 3)
         logger.info(f"Function: <{f.__name__}> worked {work_time} seconds")
         return result, work_time
+
     return wrap
 
 
 def read_benchmarks(data_file: str = "benchmarks.txt"):
     with open(osp.join(DATA_DIR, data_file)) as test_data:
         column_names = test_data.readline().strip().split(",")
-        BencmarkGrpah = namedtuple('BenchmarkGraph', column_names)
+        BencmarkGrpah = namedtuple("BenchmarkGraph", column_names)
         benchmark_data = tuple(
-            [BencmarkGrpah(*tuple(line.strip().split(","))) for line in test_data.readlines()],
+            [
+                BencmarkGrpah(*tuple(line.strip().split(",")))
+                for line in test_data.readlines()
+            ],
         )
         return benchmark_data

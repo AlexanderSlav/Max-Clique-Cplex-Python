@@ -1,10 +1,10 @@
 # Max-Clique-Cplex-Python
 
 
-## Requirements 
+## Requirements
  - Python >= 3.6
- - pip install -r requirements.txt
- 
+ - pip install -r requirements-dev.txt
+
 ## Evaluation on subset of DIMACS graphs
 ```bash
 usage: max_clique_bnb_evaluator.py [-h] [--input_data_file INPUT_DATA_FILE]
