@@ -48,7 +48,11 @@ def main():
     for idx, graph in enumerate(tqdm(benchmark_graphs)):
         graph_name = graph.GraphName[:-4]
         logger.add(
-            osp.join(osp.dirname(__file__), "logs", f"{graph_name}.log"),
+            osp.join(
+                osp.dirname(__file__),
+                "becnhmark_logs",
+                f"{graph_name}.log",
+            ),
         )
         logger.info(f"BnB started for {graph_name} !")
         graph, work_time = benchmark(graph)
