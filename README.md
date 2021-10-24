@@ -49,4 +49,11 @@ All graphs were evaluated on the machine with the following characteristics:
 
 ### Meduim graphs
 
-...(Will be updated)
+|Graph Name   |Correct Max Clique|Graph Complexity|Found Max Clique|Is Clique|Consumed Time(seconds)|
+|-------------|------------------|----------------|----------------|---------|-------------|
+|brock200_2 |12                |M               |12               |True     |244.075        |
+|brock200_3 |15                 |M                 |15               |True     |484.801      |
+|brock200_4      |17               |M                |17              |True     |2680.945        |
+|C125.9    |34               |M                 |34              |True     |493.235      |
+|gen200_p0.9_44  |44                |M                  |44              |True     |2218.3       |
+|gen200_p0.9_45  |55                |M                  |55              |True     |34.521      |
