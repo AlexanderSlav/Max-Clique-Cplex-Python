@@ -1,6 +1,6 @@
 import argparse
 from graph import MCPGraph
-from bnb import BNBSolver
+from algorithms.branch_and_bound import BNBSolver
 from utils import *
 from tqdm import tqdm
 import json
@@ -86,11 +86,11 @@ def main():
         if not osp.exists(per_graph_result_dir):
             os.makedirs(per_graph_result_dir)
 
-        with open(
-            osp.join(per_graph_result_dir, f"{graph_name}.json"),
-            "w",
-        ) as file:
-            json.dump(curr_result, file, indent=4)
+        # with open(
+        #     osp.join(per_graph_result_dir, f"{graph_name}.json"),
+        #     "w",
+        # ) as file:
+        #     json.dump(curr_result, file, indent=4)
 
         logger.info(f"BnB finished for {graph_name} !")
 

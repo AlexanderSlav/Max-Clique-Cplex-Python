@@ -68,29 +68,29 @@ class MCPGraph:
             strategies.append(
                 nx.coloring.strategy_independent_set,
             )
-        start_time = time.time()
-        for _ in range(iteration_number):
-            if time.time() - start_time >= time_limit:
-                logger.info("Reach time limit at searching ind sets")
-                break
+        # start_time = time.time()
+        # for _ in range(iteration_number):
+        #     if time.time() - start_time >= time_limit:
+        #         logger.info("Reach time limit at searching ind sets")
+        #         break
 
-            for strategy in strategies:
-                dict_of_independet_sets = dict()
-                # get coloring with current strategy: running_coloring - dict(key=vertex, value=color)
-                running_coloring = nx.coloring.greedy_color(
-                    self.graph,
-                    strategy=strategy,
-                )
-                for vertex, color in running_coloring.items():
-                    if color not in dict_of_independet_sets.keys():
-                        dict_of_independet_sets[color] = []
-                    dict_of_independet_sets[color].append(vertex)
+        for strategy in strategies:
+            dict_of_independet_sets = dict()
+            # get coloring with current strategy: running_coloring - dict(key=vertex, value=color)
+            running_coloring = nx.coloring.greedy_color(
+                self.graph,
+                strategy=strategy,
+            )
+            for vertex, color in running_coloring.items():
+                if color not in dict_of_independet_sets.keys():
+                    dict_of_independet_sets[color] = []
+                dict_of_independet_sets[color].append(vertex)
 
-                for _, ind_set in dict_of_independet_sets.items():
-                    if len(ind_set) >= minimum_set_size:
-                        self.independent_vertex_sets.add(
-                            tuple(sorted(ind_set)),
-                        )
+            for _, ind_set in dict_of_independet_sets.items():
+                if len(ind_set) >= minimum_set_size:
+                    self.independent_vertex_sets.add(
+                        tuple(sorted(ind_set)),
+                    )
 
     def filter_covered_not_connected(self, filtration_limit: int = 300000):
         filtered_not_connected = []
@@ -98,10 +98,10 @@ class MCPGraph:
             self.not_connected_vertexes,
         ):
             vertexes_are_covered_by_set = False
-            vertex_1, vetex_2 = not_connected_vertexes
+            vertex_1, vertex_2 = not_connected_vertexes
             if idx < filtration_limit:
                 for ind_set in self.independent_vertex_sets:
-                    if (vertex_1 in ind_set) and (vetex_2 in ind_set):
+                    if (vertex_1 in ind_set) and (vertex_2 in ind_set):
                         vertexes_are_covered_by_set = True
                         break
             if not vertexes_are_covered_by_set:
