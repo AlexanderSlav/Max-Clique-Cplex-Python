@@ -99,7 +99,8 @@ class BNCSolver(MaxCliqueSolver):
                 logger.info(
                     f"|{self.graph.name}| Skip Branch with MCP size {current_objective_value}!",
                 )
-            return
+            return False
+        return True
 
     @timeit
     def solve(self):
