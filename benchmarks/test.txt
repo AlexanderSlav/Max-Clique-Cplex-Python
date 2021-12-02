@@ -1,2 +1,2 @@
 GraphName,CorrectMaxClique,Level
-johnson16-2-4.clq,8,E
+MANN_a9.clq,16,E

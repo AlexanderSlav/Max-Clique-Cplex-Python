@@ -1,6 +1,7 @@
 import argparse
 from graph import MCPGraph
 from algorithms.branch_and_bound import BNBSolver
+from algorithms.branch_and_cut import BNCSolver
 from utils import *
 from tqdm import tqdm
 import json
@@ -13,7 +14,7 @@ def parse_args():
         "-i",
         type=str,
         help="path to file with input benchmarks data",
-        default="easy.txt",
+        default="test.txt",
     )
     parser.add_argument(
         "--output_results_dump",
@@ -28,12 +29,12 @@ def parse_args():
 @timeit
 def benchmark(graph: namedtuple):
     graph = MCPGraph(data=graph)
-    graph.apply_coloring()
+    graph.independent_sets_generation()
     graph.filter_covered_not_connected()
-    bnb_solver = BNBSolver(graph=graph)
-    bnb_solver.solve()
-    graph.maximum_clique_size_found = bnb_solver.maximum_clique_size
-    graph.is_solution_is_clique = bnb_solver.is_solution_is_clique
+    solver = BNCSolver(graph=graph)
+    solver.solve()
+    # graph.maximum_clique_size_found = solver.maximum_clique_size
+    # graph.is_solution_is_clique = solver.is_solution_is_clique
     return graph
 
 
@@ -64,27 +65,29 @@ def main():
         logger.info(f"BnB started for {graph_name} !")
         # try:
         graph, work_time = benchmark(graph)
-        results.append(
-            [
-                str(graph.name),
-                str(graph.maximum_clique_size_gt),
-                str(graph.complexity_type),
-                str(graph.maximum_clique_size_found),
-                str(graph.is_solution_is_clique),
-                str(work_time),
-            ],
-        )
-        curr_result = {
-            "Right Maximum Clique Size": str(graph.maximum_clique_size_gt),
-            "Found Maximum Clique Size": str(graph.maximum_clique_size_found),
-            "Consumed Time": str(work_time),
-            "Is Clique": str(graph.is_solution_is_clique),
-            "Graph Complexity": str(graph.complexity_type),
-        }
+        break
+        # results.append(
+        #     [
+        #         str(graph.name),
+        #         str(graph.maximum_clique_size_gt),
+        #         str(graph.complexity_type),
+        #         str(graph.maximum_clique_size_found),
+        #         str(graph.is_solution_is_clique),
+        #         str(work_time),
+        #     ],
+        # )
+        # curr_result = {
+        #     "Right Maximum Clique Size": str(graph.maximum_clique_size_gt),
+        #     "Found Maximum Clique Size": str(graph.maximum_clique_size_found),
+        #     "Consumed Time": str(work_time),
+        #     "Is Clique": str(graph.is_solution_is_clique),
+        #     "Graph Complexity": str(graph.complexity_type),
+        # }
+        # print(curr_result)
 
-        per_graph_result_dir = osp.join(RESULTS_DIR, "per_graph_results")
-        if not osp.exists(per_graph_result_dir):
-            os.makedirs(per_graph_result_dir)
+        # per_graph_result_dir = osp.join(RESULTS_DIR, "per_graph_results")
+        # if not osp.exists(per_graph_result_dir):
+        #     os.makedirs(per_graph_result_dir)
 
         # with open(
         #     osp.join(per_graph_result_dir, f"{graph_name}.json"),
@@ -94,7 +97,7 @@ def main():
 
         logger.info(f"BnB finished for {graph_name} !")
 
-    dump_results_to_csv("report", results)
+    # dump_results_to_csv("report", results)
 
 
 if __name__ == "__main__":

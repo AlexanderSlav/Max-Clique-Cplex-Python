@@ -15,20 +15,22 @@ class BNBSolver(MaxCliqueSolver):
         2. Initial Heuristic
         3. BnB recursive call
     """
+
     def __init__(
         self,
         graph: MCPGraph,
         branching_strategy: str = "max",
         debug_mode: bool = False,
     ):
-        self.graph = graph
-        self.branching_strategy = branching_strategy
+        super(BNBSolver, self).__init__(
+            graph=graph,
+            branching_strategy=branching_strategy,
+            debug_mode=debug_mode,
+        )
         self.cplex_model = self.construct_model()
         self.best_solution = []
         self.maximum_clique_size = 0
-        self.branch_num = 0
         self.eps = 1e-5
-        self.debug_mode = debug_mode
 
     def construct_model(self):
         nodes_amount = len(self.graph.nodes)
@@ -93,7 +95,9 @@ class BNBSolver(MaxCliqueSolver):
         self.init_model_with_heuristic_solution()
         # branch&bound recursive algorithm
         self.branching()
-        solution_nodes = np.where(np.isclose(self.best_solution, 1.0, atol=1e-5))
+        solution_nodes = np.where(
+            np.isclose(self.best_solution, 1.0, atol=1e-5),
+        )
 
         # log result
         if self.is_clique(solution_nodes[0].tolist()):
@@ -110,8 +114,7 @@ class BNBSolver(MaxCliqueSolver):
         for idx in range(len(self.best_solution)):
             if self.best_solution[idx] != 0:
                 logger.info(f"x_{idx} = {self.best_solution[idx]}")
-    
-    
+
     def goto_left_branch(self, branching_var, cur_branch):
         # Add Left constraints
         self.add_left_constraint(branching_var, cur_branch)
@@ -119,7 +122,7 @@ class BNBSolver(MaxCliqueSolver):
         self.cplex_model.linear_constraints.delete(f"c{cur_branch}")
         if self.debug_mode:
             logger.info(f"|{self.graph.name}| The c{cur_branch} deleted")
-    
+
     def goto_right_branch(self, branching_var, cur_branch):
         # Add Right constraints
         self.add_right_constraint(branching_var, cur_branch)
@@ -139,11 +142,7 @@ class BNBSolver(MaxCliqueSolver):
             logger.debug(current_values)
 
         # There is no sense in branching further
-        if current_objective_value <= self.maximum_clique_size:
-            if self.debug_mode:
-                logger.info(
-                    f"|{self.graph.name}| Skip Branch with MCP size {current_objective_value}!",
-                )
+        if not self.current_solution_is_best(current_objective_value):
             return
 
         if all(
@@ -163,27 +162,7 @@ class BNBSolver(MaxCliqueSolver):
 
         self.branch_num += 1
         cur_branch = self.branch_num
-
-        # Choose branching var from non integers vars
-        if self.branching_strategy == "max":
-            not_integer_vars = [
-                (idx, x)
-                for idx, x in enumerate(current_values)
-                if not math.isclose(x, np.round(x), rel_tol=self.eps)
-            ]
-
-            branching_var = max(not_integer_vars, key=lambda x: x[1])
-        elif self.branching_strategy == "random":
-            not_integer_vars = [
-                (idx, x)
-                for idx, x in enumerate(current_values)
-                if not math.isclose(x, np.round(x), rel_tol=self.eps)
-            ]
-            branching_var = random.choice(not_integer_vars)
-
-        else:
-            logger.error("Wrong branching strategy")
-
+        branching_var = self.get_branching_var(current_values)
         # go to  right branch if value closer to 1
         if round(branching_var[1]):
             self.goto_right_branch(branching_var, cur_branch)

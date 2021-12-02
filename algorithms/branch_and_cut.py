@@ -1,6 +1,3 @@
-import math
-import random
-
 import cplex
 import numpy as np
 from algorithms.base import MaxCliqueSolver
@@ -16,16 +13,17 @@ class BNCSolver(MaxCliqueSolver):
         debug_mode: bool = False,
         tailing_off_time_threshold: int = 3600,
     ):
-        self.graph = graph
-        self.branching_strategy = branching_strategy
+        super(BNCSolver, self).__init__(
+            graph=graph,
+            branching_strategy=branching_strategy,
+            debug_mode=debug_mode,
+        )
         self.cplex_model = self.construct_model()
         self.best_solution = []
         self.maximum_clique_size = 0
-        self.branch_num = 0
         self.eps = 1e-5
-        self.debug_mode = debug_mode
         self.tailing_off_time_threshold = tailing_off_time_threshold
-    
+
     def construct_model(self):
         nodes_amount = len(self.graph.nodes)
         obj = [1.0] * nodes_amount
@@ -38,10 +36,9 @@ class BNCSolver(MaxCliqueSolver):
             self.graph.independent_vertex_sets,
         )
 
-        right_hand_side = [1.0] * (independent_vertex_sets_amount)
+        right_hand_side = [1.0] * independent_vertex_sets_amount
         constraint_names = [
-            f"c{x}"
-            for x in range(independent_vertex_sets_amount)
+            f"c{x}" for x in range(independent_vertex_sets_amount)
         ]
         constraint_senses = ["L"] * independent_vertex_sets_amount
 
@@ -71,13 +68,24 @@ class BNCSolver(MaxCliqueSolver):
             names=constraint_names,
         )
         return problem
-    
-    @timeit
-    def separation(self):
-        
-        pass
-    
-    @timeit
+
+    def separation(self, solution, top_k: int = 2):
+        independent_sets = self.graph.independent_sets_generation(
+            minimum_set_size=2,
+            iteration_number=1,
+            max_weighted=True,
+            solution=solution,
+            strategies=[nx.coloring.strategy_random_sequential],
+        )
+        sorted_set = sorted(
+            independent_sets,
+            key=lambda item: item[1],
+            reverse=True,
+        )
+        top_k = min(top_k, len(sorted_set))
+        new_constraints = [ind_set[0] for ind_set in sorted_set][:top_k]
+        return new_constraints if len(new_constraints) else None
+
     def get_solution(self):
         self.cplex_model.solve()
         # get the solution variables and objective value
@@ -87,51 +95,49 @@ class BNCSolver(MaxCliqueSolver):
         )
         if self.debug_mode:
             logger.debug(current_values)
-        
+
         return current_objective_value, current_values
-    
-    def is_current_solution_is_best(self, current_objective_value):
-        current_objective_value = math.ceil(current_objective_value) if not math.isclose(current_objective_value, 
-                                                                                        round(current_objective_value), 
-                                                                                        rel_tol=1e-5) else current_objective_value
-        if current_objective_value <= self.maximum_clique_size:
-            if self.debug_mode:
-                logger.info(
-                    f"|{self.graph.name}| Skip Branch with MCP size {current_objective_value}!",
-                )
-            return False
-        return True
 
     @timeit
     def solve(self):
+        self.init_model_with_heuristic_solution()
+        self.branch_and_cut()
+
+    def check_solution(self, curr_values):
+        solution_nodes = np.where(np.isclose(curr_values, 1.0, atol=1e-5))
+        is_clique, subgraph = self.is_clique(solution_nodes[0].tolist())
+        if is_clique:
+            return None
+        else:
+            return self.get_complement_edges(subgraph)
+
+    def branch_and_cut(self):
         current_objective_value, current_values = self.get_solution()
         # There is no sense in branching further
-
+        if not self.current_solution_is_best(current_objective_value):
+            return
         start_time = time.time()
         while time.time() - start_time <= self.tailing_off_time_threshold:
-            separation = self.separation()
-            if separation is not None:
-                # TODO: add constraints 
-                current_objective_value, current_values = self.get_solution()
-                if 
-        # logger.info("Reach time limit at searching ind sets")
+            new_constraints = self.separation(current_values)
+            if new_constraints is None:
+                if self.debug_mode:
+                    logger.info("No more new separations! ")
+                break
+            self.add_multiple_constraints(new_constraints)
+            current_objective_value, current_values = self.get_solution()
+            if not self.current_solution_is_best(current_objective_value):
+                return
 
-        # # branch&bound recursive algorithm
-        # self.branching()
-        # solution_nodes = np.where(np.isclose(self.best_solution, 1.0, atol=1e-5))
+        self.branch_num += 1
+        cur_branch = self.branch_num
+        i = self.get_branching_var(current_values)
+        if i == -1:
+            broken_constraints = self.check_solution(current_values)
+            if broken_constraints is not None:
+                self.add_multiple_constraints(broken_constraints)
+                self.branch_and_cut()
+            else:
+                self.maximum_clique_size = current_objective_value
+                self.best_solution = current_values
 
-        # # log result
-        # if self.is_clique(solution_nodes[0].tolist()):
-        #     logger.info(
-        #         f"Objective Value of MCP Problem (Maximum Clique Size): {self.maximum_clique_size}. It is a clique!",
-        #     )
-        #     self.is_solution_is_clique = True
-        # else:
-        #     logger.info(
-        #         f"Objective Value of MCP Problem (Maximum Clique Size): {self.maximum_clique_size}. It is a clique!",
-        #     )
-        #     self.is_solution_is_clique = False
-
-        # for idx in range(len(self.best_solution)):
-        #     if self.best_solution[idx] != 0:
-        #         logger.info(f"x_{idx} = {self.best_solution[idx]}")
+        return

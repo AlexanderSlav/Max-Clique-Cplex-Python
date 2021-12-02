@@ -3,6 +3,7 @@ import cplex
 from graph import MCPGraph
 from utils import *
 import numpy as np
+import random
 
 
 class MaxCliqueSolver:
@@ -20,6 +21,7 @@ class MaxCliqueSolver:
         self.branch_num = 0
         self.eps = 1e-5
         self.debug_mode = debug_mode
+        self.branch_num = 0
 
     def construct_model(self):
         problem = cplex.Cplex()
@@ -34,11 +36,41 @@ class MaxCliqueSolver:
     def is_clique(self, nodelist):
         chek_subgraph = self.graph.graph.subgraph(nodelist)
         num_nodes = len(nodelist)
-        return chek_subgraph.size() == num_nodes * (num_nodes - 1) / 2
+        return (
+            chek_subgraph.size() == num_nodes * (num_nodes - 1) / 2,
+            chek_subgraph,
+        )
+
+    @staticmethod
+    def get_complement_edges(subgraph):
+        graph_complement = nx.complement(subgraph)
+        return [
+            filter(lambda pair: pair[0] != pair[1], graph_complement.edges()),
+        ]
 
     @timeit
     def solve(self):
         raise NotImplementedError
+
+    def add_multiple_constraints(self, constraints):
+        constraint_senses = ["L"] * (len(constraints))
+        right_hand_side = [1.0] * (len(constraints))
+        constraint_names = [f"c{x}" for x in range(len(constraints))]
+        new_constraints = []
+
+        for constraint in constraints:
+            constraint = [
+                [f"x{i}" for i in constraint],
+                [1.0] * len(constraint),
+            ]
+            new_constraints.append(constraint)
+
+        self.cplex_model.linear_constraints.add(
+            lin_expr=new_constraints,
+            senses=constraint_senses,
+            rhs=right_hand_side,
+            names=constraint_names,
+        )
 
     def add_left_constraint(self, branching_var: tuple, current_branch: int):
         branching_var_idx, branching_var_value = branching_var
@@ -71,6 +103,50 @@ class MaxCliqueSolver:
             names=[f"c{current_branch}"],
         )
 
+    def current_solution_is_best(self, current_objective_value):
+        current_objective_value = (
+            math.ceil(current_objective_value)
+            if not math.isclose(
+                current_objective_value,
+                round(current_objective_value),
+                rel_tol=1e-5,
+            )
+            else current_objective_value
+        )
+        if current_objective_value <= self.maximum_clique_size:
+            if self.debug_mode:
+                logger.info(
+                    f"|{self.graph.name}| Skip Branch with MCP size {current_objective_value}!",
+                )
+            return False
+        return True
+
+    def get_branching_var(self, current_values):
+
+        if all(
+            [
+                math.isclose(x, np.round(x), rel_tol=self.eps)
+                for x in current_values
+            ],
+        ):
+            return -1
+
+        # Choose branching var from non integers vars
+        if self.branching_strategy == "max":
+            not_integer_vars = [
+                (idx, x)
+                for idx, x in enumerate(current_values)
+                if not math.isclose(x, np.round(x), rel_tol=self.eps)
+            ]
+
+            return max(not_integer_vars, key=lambda x: x[1])
+        elif self.branching_strategy == "random":
+            not_integer_vars = [
+                (idx, x)
+                for idx, x in enumerate(current_values)
+                if not math.isclose(x, np.round(x), rel_tol=self.eps)
+            ]
+            return random.choice(not_integer_vars)
 
     def init_model_with_heuristic_solution(self):
         # helper function
@@ -98,7 +174,6 @@ class MaxCliqueSolver:
             logger.info(f"Initial heuristic solution is not clique!")
             raise Exception("The Initial Heuristic has a mistake !!!")
 
-        
     @timeit
     def initial_heuristic(self):
         """Greedy Init Heuristic

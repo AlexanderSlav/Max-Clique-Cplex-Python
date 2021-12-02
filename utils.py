@@ -4,13 +4,23 @@ import os
 import os.path as osp
 import time
 from collections import namedtuple
-
+import networkx as nx
 from loguru import logger
 
 DATA_DIR = osp.join(osp.dirname(__file__), "benchmarks")
 SOURCE_GRAPH_DIR = osp.join(osp.dirname(__file__), "data")
 RESULTS_DIR = osp.join(osp.dirname(__file__), "results")
 LOG_DIR = osp.join(osp.dirname(__file__), "becnhmark_logs")
+
+EPS = 1e-5
+STRATEGIES = [
+    nx.coloring.strategy_largest_first,
+    nx.coloring.strategy_random_sequential,
+    nx.coloring.strategy_connected_sequential_bfs,
+    nx.coloring.strategy_connected_sequential_dfs,
+    nx.coloring.strategy_saturation_largest_first,
+    nx.coloring.strategy_smallest_last,
+]
 
 timestamp = datetime.datetime.now().strftime("%Y_%m_%d_%H:%M")
 
