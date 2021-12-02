@@ -22,7 +22,7 @@ def parse_args():
         "-i",
         type=str,
         help="path to file with input benchmarks data",
-        default="easy.txt",
+        default="medium.txt",
     )
     parser.add_argument(
         "--output_results_dump",
