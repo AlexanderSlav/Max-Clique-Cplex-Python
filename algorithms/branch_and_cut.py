@@ -5,6 +5,8 @@ from graph import MCPGraph
 from utils import *
 import math
 
+# TODO Code refactoring
+
 
 class BNCSolver(MaxCliqueSolver):
     def __init__(

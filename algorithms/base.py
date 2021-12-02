@@ -5,6 +5,8 @@ from utils import *
 import numpy as np
 import random
 
+# TODO Code refactoring
+
 
 class MaxCliqueSolver:
     def __init__(
