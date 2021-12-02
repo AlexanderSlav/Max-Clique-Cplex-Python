@@ -41,13 +41,6 @@ class MaxCliqueSolver:
             chek_subgraph,
         )
 
-    @staticmethod
-    def get_complement_edges(subgraph):
-        graph_complement = nx.complement(subgraph)
-        return list(
-            filter(lambda edge: edge[0] != edge[1], graph_complement.edges()),
-        )
-
     @timeit
     def solve(self):
         raise NotImplementedError

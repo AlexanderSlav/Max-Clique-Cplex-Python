@@ -3,6 +3,7 @@ import numpy as np
 from algorithms.base import MaxCliqueSolver
 from graph import MCPGraph
 from utils import *
+import math
 
 
 class BNCSolver(MaxCliqueSolver):
@@ -87,29 +88,50 @@ class BNCSolver(MaxCliqueSolver):
         return new_constraints if len(new_constraints) else None
 
     def get_solution(self):
-        self.cplex_model.solve()
-        # get the solution variables and objective value
-        current_values = self.cplex_model.solution.get_values()
-        current_objective_value = (
-            self.cplex_model.solution.get_objective_value()
-        )
-        if self.debug_mode:
-            logger.debug(current_values)
+        try:
+            self.cplex_model.solve()
+            # get the solution variables and objective value
+            current_values = self.cplex_model.solution.get_values()
+            current_objective_value = (
+                self.cplex_model.solution.get_objective_value()
+            )
+            if self.debug_mode:
+                logger.debug(current_values)
+            return current_objective_value, current_values
 
-        return current_objective_value, current_values
+        except:
+            return None, None
 
     @timeit
     def solve(self):
         self.init_model_with_heuristic_solution()
         self.branch_and_cut()
+        solution_nodes = np.where(
+            np.isclose(self.best_solution, 1.0, atol=1e-5),
+        )
+        # log result
+        if self.is_clique(solution_nodes[0].tolist()):
+            logger.info(
+                f"Objective Value of MCP Problem (Maximum Clique Size): {self.maximum_clique_size}. It is a clique!",
+            )
+            self.is_solution_is_clique = True
+        else:
+            logger.info(
+                f"Objective Value of MCP Problem (Maximum Clique Size): {self.maximum_clique_size}. It is not a clique!",
+            )
+            self.is_solution_is_clique = False
+
+    @staticmethod
+    def get_complement_edges(subgraph):
+        graph_complement = nx.complement(subgraph)
+        return list(
+            filter(lambda edge: edge[0] != edge[1], graph_complement.edges()),
+        )
 
     def check_solution(self, curr_values):
         solution_nodes = np.where(np.isclose(curr_values, 1.0, atol=1e-5))
         is_clique, subgraph = self.is_clique(solution_nodes[0].tolist())
-        if is_clique:
-            return None
-        else:
-            return self.get_complement_edges(subgraph)
+        return None if is_clique else self.get_complement_edges(subgraph)
 
     def goto_left_branch(self, branching_var, cur_branch):
         # Add Left constraints
@@ -129,6 +151,8 @@ class BNCSolver(MaxCliqueSolver):
 
     def branch_and_cut(self):
         current_objective_value, current_values = self.get_solution()
+        if current_objective_value is None:
+            return
         # There is no sense in branching further
         if not self.current_solution_is_best(current_objective_value):
             return
@@ -141,6 +165,8 @@ class BNCSolver(MaxCliqueSolver):
                 break
             self.add_multiple_constraints(new_constraints)
             current_objective_value, current_values = self.get_solution()
+            if current_objective_value is None:
+                return
             if not self.current_solution_is_best(current_objective_value):
                 return
 
@@ -153,16 +179,14 @@ class BNCSolver(MaxCliqueSolver):
                 self.add_multiple_constraints(broken_constraints)
                 self.branch_and_cut()
             else:
-                self.maximum_clique_size = current_objective_value
-                self.best_solution = current_values
+                self.best_solution = [round(x) for x in current_values]
+                self.maximum_clique_size = math.floor(current_objective_value)
+            return
 
         # go to  right branch if value closer to 1
-        print(branching_var)
         if round(branching_var[1]):
             self.goto_right_branch(branching_var, cur_branch)
             self.goto_left_branch(branching_var, cur_branch)
         else:
             self.goto_left_branch(branching_var, cur_branch)
             self.goto_right_branch(branching_var, cur_branch)
-
-        return
