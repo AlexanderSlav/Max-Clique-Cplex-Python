@@ -44,9 +44,9 @@ class MaxCliqueSolver:
     @staticmethod
     def get_complement_edges(subgraph):
         graph_complement = nx.complement(subgraph)
-        return [
-            filter(lambda pair: pair[0] != pair[1], graph_complement.edges()),
-        ]
+        return list(
+            filter(lambda edge: edge[0] != edge[1], graph_complement.edges()),
+        )
 
     @timeit
     def solve(self):
@@ -122,7 +122,6 @@ class MaxCliqueSolver:
         return True
 
     def get_branching_var(self, current_values):
-
         if all(
             [
                 math.isclose(x, np.round(x), rel_tol=self.eps)

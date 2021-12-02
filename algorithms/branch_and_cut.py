@@ -111,6 +111,22 @@ class BNCSolver(MaxCliqueSolver):
         else:
             return self.get_complement_edges(subgraph)
 
+    def goto_left_branch(self, branching_var, cur_branch):
+        # Add Left constraints
+        self.add_left_constraint(branching_var, cur_branch)
+        self.branch_and_cut()
+        self.cplex_model.linear_constraints.delete(f"c{cur_branch}")
+        if self.debug_mode:
+            logger.info(f"|{self.graph.name}| The c{cur_branch} deleted")
+
+    def goto_right_branch(self, branching_var, cur_branch):
+        # Add Right constraints
+        self.add_right_constraint(branching_var, cur_branch)
+        self.branch_and_cut()
+        self.cplex_model.linear_constraints.delete(f"c{cur_branch}")
+        if self.debug_mode:
+            logger.info(f"|{self.graph.name}| The c{cur_branch} deleted")
+
     def branch_and_cut(self):
         current_objective_value, current_values = self.get_solution()
         # There is no sense in branching further
@@ -130,8 +146,8 @@ class BNCSolver(MaxCliqueSolver):
 
         self.branch_num += 1
         cur_branch = self.branch_num
-        i = self.get_branching_var(current_values)
-        if i == -1:
+        branching_var = self.get_branching_var(current_values)
+        if branching_var == -1:
             broken_constraints = self.check_solution(current_values)
             if broken_constraints is not None:
                 self.add_multiple_constraints(broken_constraints)
@@ -139,5 +155,14 @@ class BNCSolver(MaxCliqueSolver):
             else:
                 self.maximum_clique_size = current_objective_value
                 self.best_solution = current_values
+
+        # go to  right branch if value closer to 1
+        print(branching_var)
+        if round(branching_var[1]):
+            self.goto_right_branch(branching_var, cur_branch)
+            self.goto_left_branch(branching_var, cur_branch)
+        else:
+            self.goto_left_branch(branching_var, cur_branch)
+            self.goto_right_branch(branching_var, cur_branch)
 
         return

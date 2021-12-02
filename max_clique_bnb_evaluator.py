@@ -65,7 +65,6 @@ def main():
         logger.info(f"BnB started for {graph_name} !")
         # try:
         graph, work_time = benchmark(graph)
-        break
         # results.append(
         #     [
         #         str(graph.name),
@@ -76,15 +75,14 @@ def main():
         #         str(work_time),
         #     ],
         # )
-        # curr_result = {
-        #     "Right Maximum Clique Size": str(graph.maximum_clique_size_gt),
-        #     "Found Maximum Clique Size": str(graph.maximum_clique_size_found),
-        #     "Consumed Time": str(work_time),
-        #     "Is Clique": str(graph.is_solution_is_clique),
-        #     "Graph Complexity": str(graph.complexity_type),
-        # }
-        # print(curr_result)
-
+        curr_result = {
+            "Right Maximum Clique Size": str(graph.maximum_clique_size_gt),
+            "Found Maximum Clique Size": str(graph.maximum_clique_size_found),
+            "Consumed Time": str(work_time),
+            "Is Clique": str(graph.is_solution_is_clique),
+            "Graph Complexity": str(graph.complexity_type),
+        }
+        print(curr_result)
         # per_graph_result_dir = osp.join(RESULTS_DIR, "per_graph_results")
         # if not osp.exists(per_graph_result_dir):
         #     os.makedirs(per_graph_result_dir)
