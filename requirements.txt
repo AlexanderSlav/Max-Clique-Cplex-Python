@@ -2,5 +2,4 @@ cplex==20.1.0.0
 numpy==1.21.2
 networkx==2.6.3
 loguru==0.5.3
-pytest==6.2.5
 tqdm==4.62.3
