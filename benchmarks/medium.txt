@@ -5,5 +5,3 @@ brock200_3.clq,15,M
 brock200_4.clq,17,M
 gen200_p0.9_44.clq,44,M
 gen200_p0.9_55.clq,55,M
-p_hat1000-1.clq,10,M
-san1000.clq,15,M
